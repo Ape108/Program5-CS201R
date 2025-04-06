@@ -6,7 +6,7 @@ using namespace std;
 
 int main()
 {
-    srand(time(0));
+    srand(static_cast<int>(time(0)));
     vector<wordList> sentList, posList, negList;
 
     // load vectors 
