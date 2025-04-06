@@ -1,0 +1,8 @@
+The formatted review for the file review1.txt is: 
+This was an amazing restaurant! The pizza crust was delicious, and I loved the 
+pasta. The atmosphere was wonderful and enchanting. 
+
+The original sentiment of this file is: 7.95
+
+
+
