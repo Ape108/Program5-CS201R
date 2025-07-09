@@ -23,25 +23,11 @@ int main()
 
     string fileName;
     for (unsigned int i = 1; i < 9; i++) {
-        // open input file adding to_string(i) + ".txt" to review
-        fileName = "review" + to_string(i) + ".txt";
-        
-        
-        ifstream inFile;
-        inFile.open(fileName);
-        // if not able to open, print a message and continue
-        if (!inFile.is_open()) {
-            cout << "Error opening review file" << endl;
-            exit(2); // Terminate program
-        }
-    
-        // else process the file & close it
-        processFile(inFile, outFile, fileName, sentList, posList, negList);
-        inFile.close();
-
+        openForReview(i, outFile, sentList, posList, negList);
     }
 
     //close the output file
     outFile.close();
 }
  
+

@@ -4,7 +4,7 @@
 //POST: Returns the index of target if found in arr, otherwise returns -1, leaving both input parameters unchanged and executing in O(log n) time.
 int alphabeticalBinarySearch(const vector<wordList>& arr, const string& target) {
     int left = 0;
-    int right = arr.size() - 1;
+    int right = static_cast<int>(arr.size()) - 1;
 
     while (left <= right) {
         int mid = left + (right - left) / 2;
@@ -111,7 +111,7 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
     vector<pair<string, wordList>> origFullWords; // Store original words with punctuation and case
     double origScore = 0, negScore = 0, posScore = 0;
     
-    cout << "\n\nPROCESSING FILE: " << fileName << endl << endl;
+    cout << "\nPROCESSING FILE: " << fileName << endl;
     outFile << "\n\nPROCESSING FILE: " << fileName << endl << endl;
 
     // reset all vectors & values before processing inFile
@@ -130,7 +130,7 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
         
         // Clean the word (remove punctuation and convert to lowercase)
         newWord = "";
-        for (int i = 0, len = inWord.size(); i < len; i++) {
+        for (int i = 0, len = static_cast<int>(inWord.size()); i < len; i++) {
             if (isalpha(inWord[i])) {
                 newChar = tolower(inWord[i]);
                 newWord += newChar;
@@ -157,24 +157,19 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
     }
     
     // Output formatted review
-    cout << "FORMATTED REVIEW: " << endl;
     outFile << "FORMATTED REVIEW: " << endl;
     int lineLength = 0;
     for (unsigned int i = 0; i < origFullWords.size(); i++) {
         lineLength += origFullWords[i].first.length() + 1; // +1 for space
         if (lineLength > 80) {
-            cout << endl;
             outFile << endl;
-            lineLength = origFullWords[i].first.length() + 1;
+            lineLength = static_cast<int>(origFullWords[i].first.length()) + 1;
         }
-        cout << origFullWords[i].first << " ";
         outFile << origFullWords[i].first << " ";
     }
-    cout << endl << endl;
     outFile << endl << endl;
     
     // Output original sentiment
-    cout << "ORIGINAL SENTIMENT: " << fixed << setprecision(2) << origScore << endl << endl;
     outFile << "ORIGINAL SENTIMENT: " << fixed << setprecision(2) << origScore << endl << endl;
     
     // Process to make review more negative
@@ -202,37 +197,22 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
 
     
     // Output results for making review more negative
-    cout << "WORDS UPDATED TO BE MORE NEGATIVE:" << endl;
     outFile << "WORDS UPDATED TO BE MORE NEGATIVE:" << endl;
     if (moreNeg.empty()) {
-        cout << "REVIEW NOT UPDATED TO BE MORE NEGATIVE. THE SENTIMENT REMAINS: " << fixed << setprecision(2) << origScore << endl << endl;
         outFile << "REVIEW NOT UPDATED TO BE MORE NEGATIVE. THE SENTIMENT REMAINS: " << fixed << setprecision(2) << origScore << endl << endl;
     } else {
         // Column headers
-        cout << setw(15) << "ORIGINAL WORD" << setw(10) << "VALUE" 
-             << setw(15) << "NEW WORD" << setw(10) << "VALUE" << endl;
-        cout << string(50, '-') << endl;
-        
         outFile << setw(15) << "ORIGINAL WORD" << setw(10) << "VALUE" 
                 << setw(15) << "NEW WORD" << setw(10) << "VALUE" << endl;
         outFile << string(50, '-') << endl;
         
         for (const auto& pair : moreNeg) {
-            cout << setw(15) << pair.first.word 
-                 << setw(10) << fixed << setprecision(2) << pair.first.value
-                 << setw(15) << pair.second.word 
-                 << setw(10) << fixed << setprecision(2) << pair.second.value << endl;
-                 
+
             outFile << setw(15) << pair.first.word 
                     << setw(10) << fixed << setprecision(2) << pair.first.value
                     << setw(15) << pair.second.word 
                     << setw(10) << fixed << setprecision(2) << pair.second.value << endl;
         }
-        
-        cout << string(50, '-') << endl;
-        cout << "TOTALS:" << setw(24) << fixed << setprecision(2) << beforeNeg 
-             << setw(25) << fixed << setprecision(2) << afterNeg << endl;
-        cout << "UPDATED SENTIMENT (MORE NEGATIVE): " << fixed << setprecision(2) << negScore << endl << endl;
         
         outFile << string(50, '-') << endl;
         outFile << "TOTALS:" << setw(24) << fixed << setprecision(2) << beforeNeg 
@@ -240,7 +220,6 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
         outFile << "UPDATED SENTIMENT (MORE NEGATIVE): " << fixed << setprecision(2) << negScore << endl << endl;
         
         // Generate updated review with more negative words
-        cout << "UPDATED REVIEW (MORE NEGATIVE):" << endl;
         outFile << "UPDATED REVIEW (MORE NEGATIVE):" << endl;
         lineLength = 0;
         
@@ -258,14 +237,11 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
             
             lineLength += wordToWrite.length() + 1; // +1 for space
             if (lineLength > 80) {
-                cout << endl;
                 outFile << endl;
-                lineLength = wordToWrite.length() + 1;
+                lineLength = static_cast<int>(wordToWrite.length()) + 1;
             }
-            cout << wordToWrite << " ";
             outFile << wordToWrite << " ";
         }
-        cout << endl << endl;
         outFile << endl << endl;
     }
     
@@ -291,37 +267,21 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
     }
     
     // Output results for making review more positive
-    cout << "WORDS UPDATED TO BE MORE POSITIVE:" << endl;
     outFile << "WORDS UPDATED TO BE MORE POSITIVE:" << endl;
     if (morePos.empty()) {
-        cout << "REVIEW NOT UPDATED TO BE MORE POSITIVE. THE SENTIMENT REMAINS: " << fixed << setprecision(2) << origScore << endl << endl;
         outFile << "REVIEW NOT UPDATED TO BE MORE POSITIVE. THE SENTIMENT REMAINS: " << fixed << setprecision(2) << origScore << endl << endl;
     } else {
         // Column headers
-        cout << setw(15) << "ORIGINAL WORD" << setw(10) << "VALUE" 
-             << setw(15) << "NEW WORD" << setw(10) << "VALUE" << endl;
-        cout << string(50, '-') << endl;
-        
         outFile << setw(15) << "ORIGINAL WORD" << setw(10) << "VALUE" 
                 << setw(15) << "NEW WORD" << setw(10) << "VALUE" << endl;
         outFile << string(50, '-') << endl;
         
         for (const auto& pair : morePos) {
-            cout << setw(15) << pair.first.word 
-                 << setw(10) << fixed << setprecision(2) << pair.first.value
-                 << setw(15) << pair.second.word 
-                 << setw(10) << fixed << setprecision(2) << pair.second.value << endl;
-                 
             outFile << setw(15) << pair.first.word 
                     << setw(10) << fixed << setprecision(2) << pair.first.value
                     << setw(15) << pair.second.word 
                     << setw(10) << fixed << setprecision(2) << pair.second.value << endl;
         }
-        
-        cout << string(50, '-') << endl;
-        cout << "TOTALS:" << setw(24) << fixed << setprecision(2) << beforePos 
-             << setw(25) << fixed << setprecision(2) << afterPos << endl;
-        cout << "UPDATED SENTIMENT (MORE POSITIVE): " << fixed << setprecision(2) << posScore << endl << endl;
         
         outFile << string(50, '-') << endl;
         outFile << "TOTALS:" << setw(24) << fixed << setprecision(2) << beforePos 
@@ -329,7 +289,6 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
         outFile << "UPDATED SENTIMENT (MORE POSITIVE): " << fixed << setprecision(2) << posScore << endl << endl;
         
         // Generate updated review with more positive words
-        cout << "UPDATED REVIEW (MORE POSITIVE):" << endl;
         outFile << "UPDATED REVIEW (MORE POSITIVE):" << endl;
         lineLength = 0;
         
@@ -347,14 +306,30 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
             
             lineLength += wordToWrite.length() + 1; // +1 for space
             if (lineLength > 80) {
-                cout << endl;
                 outFile << endl;
-                lineLength = wordToWrite.length() + 1;
+                lineLength = static_cast<int>(wordToWrite.length()) + 1;
             }
-            cout << wordToWrite << " ";
             outFile << wordToWrite << " ";
         }
-        cout << endl << endl;
         outFile << endl << endl;
     }
+}
+
+void openForReview(int i, ofstream& outFile, vector<wordList>& sentList, vector<wordList>& posList, vector<wordList>& negList) {
+    string fileName;
+    // open input file adding to_string(i) + ".txt" to review
+    fileName = "review" + to_string(i) + ".txt";
+    
+    
+    ifstream inFile;
+    inFile.open(fileName);
+    // if not able to open, print a message and continue
+    if (!inFile.is_open()) {
+        cout << "Error opening review file" << endl;
+        exit(2); // Terminate program
+    }
+
+    // else process the file & close it
+    processFile(inFile, outFile, fileName, sentList, posList, negList);
+    inFile.close();
 }

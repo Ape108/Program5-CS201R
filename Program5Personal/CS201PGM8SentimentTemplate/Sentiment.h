@@ -45,5 +45,6 @@ void   processFile(ifstream& inFile, ofstream& outFile, string fileName,
 //       and 3 <wordList> vectors with words loaded
 //POST:  reviews the inFile and outputs to outFile the review sentiment, a more positive and more negative review (if possible)
 
+void openForReview(int i, ofstream& outFile, vector<wordList>& sentList, vector<wordList>& posList, vector<wordList>& negList);
 
  
