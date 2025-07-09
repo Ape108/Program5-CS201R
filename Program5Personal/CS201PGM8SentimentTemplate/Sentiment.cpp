@@ -2,7 +2,8 @@
 
 //PRE: Vector arr must be sorted in ascending alphabetical order, containing wordList elements, with target as the string to find.
 //POST: Returns the index of target if found in arr, otherwise returns -1, leaving both input parameters unchanged and executing in O(log n) time.
-int alphabeticalBinarySearch(const vector<wordList>& arr, const string& target) {
+int alphabeticalBinarySearch(const vector<wordList>& arr,
+                             const string& target) {
     int left = 0;
     int right = static_cast<int>(arr.size()) - 1;
 
@@ -25,21 +26,22 @@ int alphabeticalBinarySearch(const vector<wordList>& arr, const string& target) 
 //SUPPORT FUNCTION TO FIND THE CURRENT WORD IN THE SENTEMENT VECTOR & RETURN THE SENTIMENT VALUE
 //PRE:   accepts a string (in) and the words list
 //POST:  returns the sentiment of the word if found or the value 0 if not
-double sentimentVal(string in, vector<wordList> &words) {
+double sentimentVal(string in,
+                    vector<wordList> &words) {
     
     int index = alphabeticalBinarySearch(words, in);
-    if (index != -1) { // binary search returned an index
-        return words[index].value; // return value of word at that index
+    if (index == -1) { // binary didn't return an index
+        return 0;
     }
-    return 0;
+    // return value of word at that index
+    return words[index].value;
 }
 
 //PRE:   accepts an empty set of 3 <wordList> vectors
 //POST:  loads all three vectors with data from sentiment.txt
 void loadSentiment(vector<wordList>& sentList,
-    vector<wordList>& posList,
+                   vector<wordList>& posList,
                    vector<wordList>& negList) {
-    
     //open sentiment.txt
     ifstream inFile;
     inFile.open("sentiment.txt");
@@ -49,7 +51,78 @@ void loadSentiment(vector<wordList>& sentList,
     }
     cout << "\"sentiment.txt\" opened successfully." << endl;
 
+    //add the words to the sentList vector
+    loadSentList(inFile, sentList);
     
+    inFile.close(); // Done with the input file.
+    
+    //sort positive and negative words
+    sortWords(sentList, posList, negList);
+}
+
+//PRE:  positive & negative word lists are sent
+//POST: Open the input file & output file (infile+Output
+//      'Clean' the input by removing syntax and setting all to lower case
+//       Get the sentiment value for the edited word
+//        store unedited word in vector with sentiment value
+//         if sentiment < -1  find a positive word to replace it
+//         if sentiment > 1   find a negative word to replace
+void processFile(ifstream& inFile,
+                 ofstream& outFile,
+                 string fileName,
+                 vector<wordList>& words,               // vectors containing the word & sentiment
+                 vector<wordList>& posList,
+                 vector<wordList>& negList) {
+ 
+    string inWord, newWord, origWord;
+    vector<wordList> origWords, negWords, posWords;
+    vector<pair<string, wordList>> origFullWords; // Store original words with punctuation and case
+    double origScore = 0, negScore = 0, posScore = 0;
+    
+    cout << "\nPROCESSING FILE: " << fileName << endl;
+    outFile << "\n\nPROCESSING FILE: " << fileName << endl << endl;
+
+    // reset all vectors & values before processing inFile
+    resetValues(origWords, negWords, posWords, origFullWords);
+    
+    // Read and process the file
+    processList(inFile, words);
+    
+    // Output formatted review
+    originalReview(outFile, origFullWords, origScore);
+    
+    // Process to make review more negative
+    auto [moreNeg, beforeNeg, afterNeg, morePos, beforePos, afterPos] = changeSentiment(origScore, posWords, negWords, posList, negList);
+    
+    // Output results
+    outputChanged(outFile, moreNeg, morePos, origScore, beforeNeg, beforePos, afterNeg, afterPos, negScore, posScore, origFullWords);
+}
+
+void openForReview(int i,
+                   ofstream& outFile,
+                   vector<wordList>& sentList,
+                   vector<wordList>& posList,
+                   vector<wordList>& negList) {
+    string fileName;
+    // open input file adding to_string(i) + ".txt" to review
+    fileName = "review" + to_string(i) + ".txt";
+    
+    
+    ifstream inFile;
+    inFile.open(fileName);
+    // if not able to open, print a message and continue
+    if (!inFile.is_open()) {
+        cout << "Error opening review file" << endl;
+        exit(2); // Terminate program
+    }
+
+    // else process the file & close it
+    processFile(inFile, outFile, fileName, sentList, posList, negList);
+    inFile.close();
+}
+
+void loadSentList(ifstream& inFile,
+                  vector<wordList>& sentList) {
     //add the words to the sentList vector
     string token, inLine;
     vector<string> tokens;
@@ -72,10 +145,11 @@ void loadSentiment(vector<wordList>& sentList,
             cout << err.what() << " : " << inLine << endl;
         }
     }
-    
-    inFile.close(); // Done with the input file.
+}
 
-    
+void sortWords(vector<wordList> sentList,
+               vector<wordList>& posList,
+               vector<wordList>& negList) {
     //if positive enough add to posList
     //if negative enough add to negList
     for (wordList wl : sentList) {
@@ -86,44 +160,20 @@ void loadSentiment(vector<wordList>& sentList,
         }
     }
     
-    cout << "Vectors loaded - " 
-         << sentList.size() << " total words, " 
-         << posList.size() << " positive words, " 
+    cout << "Vectors loaded - "
+         << sentList.size() << " total words, "
+         << posList.size() << " positive words, "
          << negList.size() << " negative words." << endl;
-    }
+}
 
-//PRE:  positive & negative word lists are sent
-//POST: Open the input file & output file (infile+Output
-//      'Clean' the input by removing syntax and setting all to lower case
-//       Get the sentiment value for the edited word
-//        store unedited word in vector with sentiment value
-//         if sentiment < -1  find a positive word to replace it
-//         if sentiment > 1   find a negative word to replace
-void processFile(ifstream& inFile, ofstream& outFile, string fileName,
-                    vector<wordList>& words,               // vectors containing the word & sentiment
-                    vector<wordList>& posList,
-                    vector<wordList>& negList) {
- 
+void processList(ifstream& inFile,
+                 vector<wordList>& words) {
     string inWord, newWord, origWord;
     char newChar;
+    double origScore = 0;
     vector<wordList> origWords, negWords, posWords;
-    vector<pair<wordList, wordList>> moreNeg, morePos;
     vector<pair<string, wordList>> origFullWords; // Store original words with punctuation and case
-    double origScore = 0, negScore = 0, posScore = 0;
     
-    cout << "\nPROCESSING FILE: " << fileName << endl;
-    outFile << "\n\nPROCESSING FILE: " << fileName << endl << endl;
-
-    // reset all vectors & values before processing inFile
-    origWords.clear();
-    negWords.clear();
-    posWords.clear();
-    moreNeg.clear();
-    morePos.clear();
-    origFullWords.clear();
-    origScore = 0;
-    
-    // Read and process the file
     while (inFile >> inWord) {
         wordList tempList;
         origWord = inWord; // Store original word before any processing
@@ -155,10 +205,25 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
             negWords.push_back(tempList);
         }
     }
-    
+}
+
+void resetValues(vector<wordList>& origWords,
+                 vector<wordList>& negWords,
+                 vector<wordList>& posWords,
+                 vector<pair<string, wordList>>& origFullWords) {
+    origWords.clear();
+    negWords.clear();
+    posWords.clear();
+    origFullWords.clear();
+}
+
+void originalReview(ofstream& outFile,
+                    vector<pair<string, wordList>>& origFullWords,
+                    double origScore) {
     // Output formatted review
-    outFile << "FORMATTED REVIEW: " << endl;
     int lineLength = 0;
+    
+    outFile << "FORMATTED REVIEW: " << endl;
     for (unsigned int i = 0; i < origFullWords.size(); i++) {
         lineLength += origFullWords[i].first.length() + 1; // +1 for space
         if (lineLength > 80) {
@@ -168,66 +233,117 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
         outFile << origFullWords[i].first << " ";
     }
     outFile << endl << endl;
-    
-    // Output original sentiment
     outFile << "ORIGINAL SENTIMENT: " << fixed << setprecision(2) << origScore << endl << endl;
-    
-    // Process to make review more negative
-    double beforeNeg = 0, afterNeg = 0;
-    negScore = origScore; // Start with original score
-    
-    // Replace positive words with negative words
-    for (const wordList& posWord : posWords) {
-        // Choose a random negative word as replacement
-        int randomIndex = rand() % negList.size();
-        wordList negReplacement = negList[randomIndex];
-        
-        // Update the score - subtract positive value and add negative value
-        negScore = negScore - posWord.value + negReplacement.value;
-        
-        // Store the original and replacement for output
-        moreNeg.push_back(make_pair(posWord, negReplacement));
-        
-        // Update totals for output
-        beforeNeg += posWord.value;
-        afterNeg += negReplacement.value;
-    }
-    
-    
 
+}
+
+tuple<vector<pair<wordList, wordList>>, double, double,
+      vector<pair<wordList, wordList>>, double, double> changeSentiment(double origScore,
+                                                                        vector<wordList>& posWords,
+                                                                        vector<wordList>& negWords,
+                                                                        vector<wordList>& posList,
+                                                                        vector<wordList>& negList) {
+    vector<pair<wordList, wordList>> moreNeg, morePos;
+    // Process to make review more negative
+    double negScore, posScore;
+    double beforeNeg, afterNeg, beforePos, afterPos;
     
-    // Output results for making review more negative
-    outFile << "WORDS UPDATED TO BE MORE NEGATIVE:" << endl;
-    if (moreNeg.empty()) {
-        outFile << "REVIEW NOT UPDATED TO BE MORE NEGATIVE. THE SENTIMENT REMAINS: " << fixed << setprecision(2) << origScore << endl << endl;
-    } else {
+    vector<wordList> currentList = negList;
+    vector<wordList> currentWords = posWords;
+    double currentScore = origScore;
+    double currentBefore = 0;
+    double currentAfter = 0;
+    vector<pair<wordList, wordList>> currentMore = moreNeg;
+    
+    for (int i = 0; i < 2; i++) {
+        // Replace positive words with negative words
+        for (const wordList& word : currentWords) {
+            // Choose a random negative word as replacement
+            int randomIndex = rand() % currentList.size();
+            wordList replacement = currentList[randomIndex];
+            
+            // Update the score - subtract positive value and add negative value
+            currentScore = currentScore - word.value + replacement.value;
+            
+            // Store the original and replacement for output
+            currentMore.push_back(make_pair(word, replacement));
+            
+            // Update totals for output
+            currentBefore += word.value;
+            currentAfter += replacement.value;
+        }
+        if (i == 0) { // More Negative Run
+            beforeNeg = currentBefore;
+            afterNeg = currentAfter;
+            negScore = currentScore;
+            
+            currentScore = 0;
+            currentBefore = 0;
+            currentAfter = 0;
+            currentMore = morePos;
+        } else { // More Positive Run
+            beforePos = currentBefore;
+            afterPos = currentAfter;
+            posScore = currentScore;
+        }
+        
+    }
+    return make_tuple(moreNeg, beforeNeg, afterNeg, morePos, beforePos, afterPos);
+}
+
+void outputChanged(ofstream& outFile,
+                   vector<pair<wordList, wordList>>& moreNeg,
+                   vector<pair<wordList, wordList>>& morePos,
+                   double& origScore,
+                   double& beforeNeg,
+                   double& beforePos,
+                   double& afterNeg,
+                   double& afterPos,
+                   double& negScore,
+                   double& posScore,
+                   vector<pair<string, wordList>>& origFullWords) {
+    
+    string sentWord = "NEGATIVE";
+    double currentScore = negScore;
+    double currentBefore = beforeNeg;
+    double currentAfter = afterNeg;
+    vector<pair<wordList, wordList>> currentMore = moreNeg;
+    
+    for (int i=0; i<2; i++) {
+        // Output results for making review more negative
+        outFile << "WORDS UPDATED TO BE MORE " + sentWord + " :" << endl;
+        if (currentMore.empty()) {
+            outFile << "REVIEW NOT UPDATED TO BE MORE " + sentWord + ". THE SENTIMENT REMAINS: "
+            << fixed << setprecision(2) << origScore << endl << endl;
+            continue;
+        }
         // Column headers
-        outFile << setw(15) << "ORIGINAL WORD" << setw(10) << "VALUE" 
-                << setw(15) << "NEW WORD" << setw(10) << "VALUE" << endl;
+        outFile << setw(15) << "ORIGINAL WORD" << setw(10) << "VALUE"
+        << setw(15) << "NEW WORD" << setw(10) << "VALUE" << endl;
         outFile << string(50, '-') << endl;
         
-        for (const auto& pair : moreNeg) {
-
-            outFile << setw(15) << pair.first.word 
-                    << setw(10) << fixed << setprecision(2) << pair.first.value
-                    << setw(15) << pair.second.word 
-                    << setw(10) << fixed << setprecision(2) << pair.second.value << endl;
+        for (const auto& pair : currentMore) {
+            
+            outFile << setw(15) << pair.first.word
+            << setw(10) << fixed << setprecision(2) << pair.first.value
+            << setw(15) << pair.second.word
+            << setw(10) << fixed << setprecision(2) << pair.second.value << endl;
         }
         
         outFile << string(50, '-') << endl;
-        outFile << "TOTALS:" << setw(24) << fixed << setprecision(2) << beforeNeg 
-                << setw(25) << fixed << setprecision(2) << afterNeg << endl;
-        outFile << "UPDATED SENTIMENT (MORE NEGATIVE): " << fixed << setprecision(2) << negScore << endl << endl;
+        outFile << "TOTALS:" << setw(24) << fixed << setprecision(2) << currentBefore
+        << setw(25) << fixed << setprecision(2) << currentAfter << endl;
+        outFile << "UPDATED SENTIMENT (MORE " + sentWord + "): " << fixed << setprecision(2) << currentScore << endl << endl;
         
         // Generate updated review with more negative words
-        outFile << "UPDATED REVIEW (MORE NEGATIVE):" << endl;
-        lineLength = 0;
+        outFile << "UPDATED REVIEW (MORE " + sentWord + "):" << endl;
+        int lineLength = 0;
         
         for (unsigned int i = 0; i < origFullWords.size(); i++) {
             string wordToWrite = origFullWords[i].first; // Default to original word
             
             // Check if this word is in our replacement list
-            for (const auto& pair : moreNeg) {
+            for (const auto& pair : currentMore) {
                 if (origFullWords[i].second.word == pair.first.word) {
                     // Replace with negative word
                     wordToWrite = pair.second.word;
@@ -243,93 +359,11 @@ void processFile(ifstream& inFile, ofstream& outFile, string fileName,
             outFile << wordToWrite << " ";
         }
         outFile << endl << endl;
+        
+        sentWord = "POSITIVE";
+        currentScore = posScore;
+        currentBefore = beforePos;
+        currentAfter = afterPos;
+        currentMore = morePos;
     }
-    
-    // Process to make review more positive
-    double beforePos = 0, afterPos = 0;
-    posScore = origScore; // Start with original score
-    
-    // Replace negative words with positive words
-    for (const wordList& negWord : negWords) {
-        // Choose a random positive word as replacement
-        int randomIndex = rand() % posList.size();
-        wordList posReplacement = posList[randomIndex];
-        
-        // Update the score - subtract negative value and add positive value
-        posScore = posScore - negWord.value + posReplacement.value;
-        
-        // Store the original and replacement for output
-        morePos.push_back(make_pair(negWord, posReplacement));
-        
-        // Update totals for output
-        beforePos += negWord.value;
-        afterPos += posReplacement.value;
-    }
-    
-    // Output results for making review more positive
-    outFile << "WORDS UPDATED TO BE MORE POSITIVE:" << endl;
-    if (morePos.empty()) {
-        outFile << "REVIEW NOT UPDATED TO BE MORE POSITIVE. THE SENTIMENT REMAINS: " << fixed << setprecision(2) << origScore << endl << endl;
-    } else {
-        // Column headers
-        outFile << setw(15) << "ORIGINAL WORD" << setw(10) << "VALUE" 
-                << setw(15) << "NEW WORD" << setw(10) << "VALUE" << endl;
-        outFile << string(50, '-') << endl;
-        
-        for (const auto& pair : morePos) {
-            outFile << setw(15) << pair.first.word 
-                    << setw(10) << fixed << setprecision(2) << pair.first.value
-                    << setw(15) << pair.second.word 
-                    << setw(10) << fixed << setprecision(2) << pair.second.value << endl;
-        }
-        
-        outFile << string(50, '-') << endl;
-        outFile << "TOTALS:" << setw(24) << fixed << setprecision(2) << beforePos 
-                << setw(25) << fixed << setprecision(2) << afterPos << endl;
-        outFile << "UPDATED SENTIMENT (MORE POSITIVE): " << fixed << setprecision(2) << posScore << endl << endl;
-        
-        // Generate updated review with more positive words
-        outFile << "UPDATED REVIEW (MORE POSITIVE):" << endl;
-        lineLength = 0;
-        
-        for (unsigned int i = 0; i < origFullWords.size(); i++) {
-            string wordToWrite = origFullWords[i].first; // Default to original word
-            
-            // Check if this word is in our replacement list
-            for (const auto& pair : morePos) {
-                if (origFullWords[i].second.word == pair.first.word) {
-                    // Replace with positive word
-                    wordToWrite = pair.second.word;
-                    break;
-                }
-            }
-            
-            lineLength += wordToWrite.length() + 1; // +1 for space
-            if (lineLength > 80) {
-                outFile << endl;
-                lineLength = static_cast<int>(wordToWrite.length()) + 1;
-            }
-            outFile << wordToWrite << " ";
-        }
-        outFile << endl << endl;
-    }
-}
-
-void openForReview(int i, ofstream& outFile, vector<wordList>& sentList, vector<wordList>& posList, vector<wordList>& negList) {
-    string fileName;
-    // open input file adding to_string(i) + ".txt" to review
-    fileName = "review" + to_string(i) + ".txt";
-    
-    
-    ifstream inFile;
-    inFile.open(fileName);
-    // if not able to open, print a message and continue
-    if (!inFile.is_open()) {
-        cout << "Error opening review file" << endl;
-        exit(2); // Terminate program
-    }
-
-    // else process the file & close it
-    processFile(inFile, outFile, fileName, sentList, posList, negList);
-    inFile.close();
 }

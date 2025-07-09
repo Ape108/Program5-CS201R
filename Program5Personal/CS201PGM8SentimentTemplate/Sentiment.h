@@ -45,6 +45,41 @@ void   processFile(ifstream& inFile, ofstream& outFile, string fileName,
 //       and 3 <wordList> vectors with words loaded
 //POST:  reviews the inFile and outputs to outFile the review sentiment, a more positive and more negative review (if possible)
 
-void openForReview(int i, ofstream& outFile, vector<wordList>& sentList, vector<wordList>& posList, vector<wordList>& negList);
+void openForReview(int i, ofstream& outFile, vector<wordList>& sentList,
+                   vector<wordList>& posList, vector<wordList>& negList);
 
+void loadSentList(ifstream& inFile, vector<wordList>& sentList);
  
+void sortWords(vector<wordList> sentList, vector<wordList>& posList,
+               vector<wordList>& negList);
+
+void processList(ifstream& inFile,
+                 vector<wordList>& words);
+
+void resetValues(vector<wordList>& origWords,
+                 vector<wordList>& negWords,
+                 vector<wordList>& posWords,
+                 vector<pair<string, wordList>>& origFullWords);
+
+void originalReview(ofstream& outFile,
+                    vector<pair<string, wordList>>& origFullWords,
+                    double origScore);
+
+tuple<vector<pair<wordList, wordList>>, double, double,
+      vector<pair<wordList, wordList>>, double, double> changeSentiment(double origScore,
+                                                                        vector<wordList>& posWords,
+                                                                        vector<wordList>& negWords,
+                                                                        vector<wordList>& posList,
+                                                                        vector<wordList>& negList);
+
+void outputChanged(ofstream& outFile,
+                   vector<pair<wordList, wordList>>& moreNeg,
+                   vector<pair<wordList, wordList>>& morePos,
+                   double& origScore,
+                   double& beforeNeg,
+                   double& beforePos,
+                   double& afterNeg,
+                   double& afterPos,
+                   double& negScore,
+                   double& posScore,
+                   vector<pair<string, wordList>>& origFullWords);
