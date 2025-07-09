@@ -1,7 +1,5 @@
 #include "Sentiment.h"
 
-//PRE: Vector arr must be sorted in ascending alphabetical order, containing wordList elements, with target as the string to find.
-//POST: Returns the index of target if found in arr, otherwise returns -1, leaving both input parameters unchanged and executing in O(log n) time.
 int alphabeticalBinarySearch(const vector<wordList>& arr,
                              const string& target) {
     int left = 0;
@@ -23,9 +21,6 @@ int alphabeticalBinarySearch(const vector<wordList>& arr,
     return -1; // Target not found
 }
 
-//SUPPORT FUNCTION TO FIND THE CURRENT WORD IN THE SENTEMENT VECTOR & RETURN THE SENTIMENT VALUE
-//PRE:   accepts a string (in) and the words list
-//POST:  returns the sentiment of the word if found or the value 0 if not
 double sentimentVal(string in,
                     vector<wordList> &words) {
     
@@ -37,8 +32,6 @@ double sentimentVal(string in,
     return words[index].value;
 }
 
-//PRE:   accepts an empty set of 3 <wordList> vectors
-//POST:  loads all three vectors with data from sentiment.txt
 void loadSentiment(vector<wordList>& sentList,
                    vector<wordList>& posList,
                    vector<wordList>& negList) {
@@ -60,13 +53,6 @@ void loadSentiment(vector<wordList>& sentList,
     sortWords(sentList, posList, negList);
 }
 
-//PRE:  positive & negative word lists are sent
-//POST: Open the input file & output file (infile+Output
-//      'Clean' the input by removing syntax and setting all to lower case
-//       Get the sentiment value for the edited word
-//        store unedited word in vector with sentiment value
-//         if sentiment < -1  find a positive word to replace it
-//         if sentiment > 1   find a negative word to replace
 void processFile(ifstream& inFile,
                  ofstream& outFile,
                  string fileName,
