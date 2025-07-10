@@ -20,8 +20,6 @@ int main()
     }
     
     // open review files
-
-    string fileName;
     for (unsigned int i = 1; i < 9; i++) {
         openForReview(i, outFile, sentList, posList, negList);
     }

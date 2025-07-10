@@ -89,9 +89,10 @@ void openForReview(int i,
                    vector<wordList>& sentList,
                    vector<wordList>& posList,
                    vector<wordList>& negList) {
-    string fileName;
+    string fileName, root = "reviews/";
     // open input file adding to_string(i) + ".txt" to review
-    fileName = "review" + to_string(i) + ".txt";
+    
+    fileName = root + "review" + to_string(i) + ".txt";
     
     
     ifstream inFile;
@@ -242,22 +243,9 @@ tuple<vector<pair<wordList, wordList>>, double, double,
     vector<pair<wordList, wordList>> currentMore = moreNeg;
     
     for (int i = 0; i < 2; i++) {
-        // Replace positive words with negative words
-        for (const wordList& word : currentWords) {
-            // Choose a random negative word as replacement
-            int randomIndex = rand() % currentList.size();
-            wordList replacement = currentList[randomIndex];
-            
-            // Update the score - subtract positive value and add negative value
-            currentScore = currentScore - word.value + replacement.value;
-            
-            // Store the original and replacement for output
-            currentMore.push_back(make_pair(word, replacement));
-            
-            // Update totals for output
-            currentBefore += word.value;
-            currentAfter += replacement.value;
-        }
+        // Replace  words with opposite sentiment words
+        replaceWords(currentWords, currentList, currentScore, currentMore, currentBefore, currentAfter);
+        
         if (i == 0) { // More Negative Run
             beforeNeg = currentBefore;
             afterNeg = currentAfter;
@@ -296,60 +284,100 @@ void outputChanged(ofstream& outFile,
     vector<pair<wordList, wordList>> currentMore = moreNeg;
     
     for (int i=0; i<2; i++) {
-        // Output results for making review more negative
+        // Output results for changed sentiment
         outFile << "WORDS UPDATED TO BE MORE " + sentWord + " :" << endl;
         if (currentMore.empty()) {
             outFile << "REVIEW NOT UPDATED TO BE MORE " + sentWord + ". THE SENTIMENT REMAINS: "
             << fixed << setprecision(2) << origScore << endl << endl;
             continue;
         }
-        // Column headers
-        outFile << setw(15) << "ORIGINAL WORD" << setw(10) << "VALUE"
-        << setw(15) << "NEW WORD" << setw(10) << "VALUE" << endl;
-        outFile << string(50, '-') << endl;
         
-        for (const auto& pair : currentMore) {
-            
-            outFile << setw(15) << pair.first.word
-            << setw(10) << fixed << setprecision(2) << pair.first.value
-            << setw(15) << pair.second.word
-            << setw(10) << fixed << setprecision(2) << pair.second.value << endl;
-        }
+        outputTable(outFile, currentMore, currentBefore, currentAfter, currentScore, sentWord);
         
-        outFile << string(50, '-') << endl;
-        outFile << "TOTALS:" << setw(24) << fixed << setprecision(2) << currentBefore
-        << setw(25) << fixed << setprecision(2) << currentAfter << endl;
-        outFile << "UPDATED SENTIMENT (MORE " + sentWord + "): " << fixed << setprecision(2) << currentScore << endl << endl;
-        
-        // Generate updated review with more negative words
-        outFile << "UPDATED REVIEW (MORE " + sentWord + "):" << endl;
-        int lineLength = 0;
-        
-        for (unsigned int i = 0; i < origFullWords.size(); i++) {
-            string wordToWrite = origFullWords[i].first; // Default to original word
-            
-            // Check if this word is in our replacement list
-            for (const auto& pair : currentMore) {
-                if (origFullWords[i].second.word == pair.first.word) {
-                    // Replace with negative word
-                    wordToWrite = pair.second.word;
-                    break;
-                }
-            }
-            
-            lineLength += wordToWrite.length() + 1; // +1 for space
-            if (lineLength > 80) {
-                outFile << endl;
-                lineLength = static_cast<int>(wordToWrite.length()) + 1;
-            }
-            outFile << wordToWrite << " ";
-        }
-        outFile << endl << endl;
+        writeReplacements(origFullWords, currentMore, outFile);
         
         sentWord = "POSITIVE";
         currentScore = posScore;
         currentBefore = beforePos;
         currentAfter = afterPos;
         currentMore = morePos;
+    }
+}
+
+void outputTable(ofstream& outFile,
+                 vector<pair<wordList, wordList>> currentMore,
+                 double currentBefore,
+                 double currentAfter,
+                 double currentScore,
+                 string sentWord) {
+    // Column headers
+    outFile << setw(15) << "ORIGINAL WORD" << setw(10) << "VALUE"
+    << setw(15) << "NEW WORD" << setw(10) << "VALUE" << endl;
+    outFile << string(50, '-') << endl;
+    
+    for (const auto& pair : currentMore) {
+        
+        outFile << setw(15) << pair.first.word
+        << setw(10) << fixed << setprecision(2) << pair.first.value
+        << setw(15) << pair.second.word
+        << setw(10) << fixed << setprecision(2) << pair.second.value << endl;
+    }
+    
+    outFile << string(50, '-') << endl;
+    outFile << "TOTALS:" << setw(24) << fixed << setprecision(2) << currentBefore
+    << setw(25) << fixed << setprecision(2) << currentAfter << endl;
+    outFile << "UPDATED SENTIMENT (MORE " + sentWord + "): " << fixed << setprecision(2) << currentScore << endl << endl;
+    
+    // Generate updated review with more negative words
+    outFile << "UPDATED REVIEW (MORE " + sentWord + "):" << endl;
+}
+
+void writeReplacements(vector<pair<string, wordList>>& origFullWords,
+                       vector<pair<wordList, wordList>>& currentMore,
+                       ofstream& outFile) {
+    int lineLength = 0;
+    
+    for (unsigned int i = 0; i < origFullWords.size(); i++) {
+        string wordToWrite = origFullWords[i].first; // Default to original word
+        
+        // Check if this word is in our replacement list
+        for (const auto& pair : currentMore) {
+            if (origFullWords[i].second.word == pair.first.word) {
+                // Replace with negative word
+                wordToWrite = pair.second.word;
+                break;
+            }
+        }
+        
+        lineLength += wordToWrite.length() + 1; // +1 for space
+        if (lineLength > 80) {
+            outFile << endl;
+            lineLength = static_cast<int>(wordToWrite.length()) + 1;
+        }
+        outFile << wordToWrite << " ";
+    }
+    outFile << endl << endl;
+}
+
+void replaceWords(vector<wordList> currentWords,
+                  vector<wordList> currentList,
+                  double currentScore,
+                  vector<pair<wordList, wordList>> currentMore,
+                  double currentBefore,
+                  double currentAfter) {
+    for (const wordList& word : currentWords) {
+        // Choose a random opposite word as replacement
+        int randomIndex = rand() % currentList.size();
+        wordList replacement = currentList[randomIndex];
+        
+        // Update the score - subtract current value and add opposite value
+        currentScore = currentScore - word.value + replacement.value;
+        
+        // Store the original and replacement for output
+        currentMore.push_back(make_pair(word, replacement));
+        
+        // Update totals for output
+        currentBefore += word.value;
+        currentAfter += replacement.value;
     }
 }

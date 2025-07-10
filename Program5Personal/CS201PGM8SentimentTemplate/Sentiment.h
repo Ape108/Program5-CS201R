@@ -129,3 +129,21 @@ void outputChanged(ofstream& outFile,
 
  POST: The updated reviews (more negative and more positive) and their corresponding sentiment analysis are written to the outFile.
  */
+
+void outputTable(ofstream& outFile,
+                 vector<pair<wordList, wordList>> currentMore,
+                 double currentBefore,
+                 double currentAfter,
+                 double currentScore,
+                 string sentWord);
+
+void writeReplacements(vector<pair<string, wordList>>& origFullWords,
+                       vector<pair<wordList, wordList>>& currentMore,
+                       ofstream& outFile);
+
+void replaceWords(vector<wordList> currentWords,
+                  vector<wordList> currentList,
+                  double currentScore,
+                  vector<pair<wordList, wordList>> currentMore,
+                  double currentBefore,
+                  double currentAfter);
